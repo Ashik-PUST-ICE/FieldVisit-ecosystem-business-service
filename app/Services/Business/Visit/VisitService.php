@@ -2,8 +2,17 @@
 
 namespace App\Services\Business\Visit;
 
+use App\Http\Resources\Business\Outlet\OutletResource;
+use App\Models\Business\Beat;
+use App\Models\Business\Outlet;
+use App\Models\Business\OutletAssignment;
 use App\Models\Business\Visit;
+use App\Models\Business\VisitCompetitor;
+use App\Models\Business\VisitPhoto;
+use App\Models\Business\VisitProduct;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 
 class VisitService
 {
@@ -38,5 +47,170 @@ class VisitService
     public function destroy(Visit $visit): void
     {
         $visit->delete();
+    }
+
+    public function verifyQr(string $qrToken): array
+    {
+        $outlet = Outlet::where('qr_token', $qrToken)->firstOrFail();
+        $user = Auth::user();
+
+        $assigned = OutletAssignment::where('outlet_id', $outlet->id)
+            ->where('user_id', $user->id)
+            ->where('status', 1)
+            ->exists();
+
+        if (! $assigned) {
+            throw new \RuntimeException('This outlet is not assigned to you.', 403);
+        }
+
+        $existingPending = Visit::where('outlet_id', $outlet->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($existingPending) {
+            throw new \RuntimeException('You already have a pending visit for this outlet.', 409);
+        }
+
+        return [
+            'outlet' => new OutletResource($outlet),
+            'can_visit' => true,
+        ];
+    }
+
+    public function startVisit(array $data): Visit
+    {
+        $user = Auth::user();
+        $outlet = Outlet::findOrFail($data['outlet_id']);
+
+        return Visit::create([
+            'company_id' => $outlet->company_id,
+            'outlet_id' => $outlet->id,
+            'user_id' => $user->id,
+            'client_id' => $data['client_id'] ?? null,
+            'status' => 'pending',
+            'verification_status' => false,
+            'latitude' => $data['latitude'],
+            'longitude' => $data['longitude'],
+            'outlet_latitude' => $outlet->latitude,
+            'outlet_longitude' => $outlet->longitude,
+            'allowed_radius_meters' => $outlet->geofence_radius,
+            'started_at' => now(),
+        ]);
+    }
+
+    public function verifyLocation(Visit $visit, array $data): Visit
+    {
+        if ($visit->status !== 'pending') {
+            throw new \RuntimeException('Visit is not in pending state.', 400);
+        }
+
+        $outlet = $visit->outlet;
+
+        $distance = $this->calculateDistance(
+            (float) $data['latitude'],
+            (float) $data['longitude'],
+            (float) $outlet->latitude,
+            (float) $outlet->longitude
+        );
+
+        $allowedRadius = $outlet->geofence_radius ?? 100;
+        $isVerified = $distance <= $allowedRadius;
+
+        $visit->update([
+            'verification_status' => $isVerified,
+            'distance_meters' => round($distance, 2),
+            'allowed_radius_meters' => $allowedRadius,
+            'latitude' => $data['latitude'],
+            'longitude' => $data['longitude'],
+        ]);
+
+        if (! $isVerified) {
+            throw new \RuntimeException("You are {$distance} meters away. Allowed radius: {$allowedRadius} meters.", 422);
+        }
+
+        return $visit;
+    }
+
+    public function completeVisit(Visit $visit, array $data, ?array $photos = null, ?array $competitors = null, ?array $products = null): Visit
+    {
+        if (! $visit->verification_status) {
+            throw new \RuntimeException('Location verification is required before completing visit.', 422);
+        }
+
+        $visit->update([
+            'status' => 'completed',
+            'completed_at' => now(),
+            'remarks' => $data['remarks'] ?? null,
+            'display_condition' => $data['display_condition'] ?? null,
+            'display_quantity' => $data['display_quantity'] ?? null,
+        ]);
+
+        if ($photos) {
+            foreach ($photos as $photo) {
+                $path = $photo->store('visit-photos', 'public');
+                $visit->photos()->create([
+                    'company_id' => $visit->company_id,
+                    'path' => $path,
+                    'caption' => null,
+                ]);
+            }
+        }
+
+        if ($competitors) {
+            foreach ($competitors as $competitorData) {
+                $visit->competitors()->create([
+                    'company_id' => $visit->company_id,
+                    'competitor_id' => $competitorData['competitor_id'] ?? null,
+                    'notes' => $competitorData['notes'] ?? null,
+                ]);
+            }
+        }
+
+        if ($products) {
+            foreach ($products as $productData) {
+                $visit->products()->create([
+                    'company_id' => $visit->company_id,
+                    'product_id' => $productData['product_id'] ?? null,
+                    'quantity' => $productData['quantity'] ?? null,
+                    'availability' => $productData['availability'] ?? null,
+                    'notes' => $productData['notes'] ?? null,
+                ]);
+            }
+        }
+
+        return $visit;
+    }
+
+    public function uploadPhoto(Visit $visit, UploadedFile $photo, ?string $caption = null): VisitPhoto
+    {
+        $path = $photo->store('visit-photos', 'public');
+
+        return $visit->photos()->create([
+            'company_id' => $visit->company_id,
+            'path' => $path,
+            'caption' => $caption,
+        ]);
+    }
+
+    private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadius = 6371;
+
+        $latFrom = deg2rad($lat1);
+        $lonFrom = deg2rad($lon1);
+        $latTo = deg2rad($lat2);
+        $lonTo = deg2rad($lon2);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+             cos($latFrom) * cos($latTo) *
+             sin($lonDelta / 2) * sin($lonDelta / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c * 1000;
     }
 }
