@@ -13,3 +13,5 @@ Route::post('outlets/verify-qr', [VisitController::class, 'verifyQr']);
 Route::post('visits/start', [VisitController::class, 'startVisit']);
 Route::post('visits/{visit}/verify-location', [VisitController::class, 'verifyLocation']);
 Route::post('visits/{visit}/complete', [VisitController::class, 'completeVisit']);
+Route::get('visits/history', [VisitController::class, 'history']);
+Route::post('visits/sync', [VisitController::class, 'sync']);

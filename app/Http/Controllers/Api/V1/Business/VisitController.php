@@ -13,8 +13,6 @@ use App\Models\Business\Visit;
 use App\Services\Applications\Api\ApiResponse;
 use App\Services\Business\Visit\VisitService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class VisitController extends Controller
 {
@@ -23,7 +21,7 @@ class VisitController extends Controller
     public function index(Request $request)
     {
         return $this->handleRequest(function () use ($request) {
-            $visits = $this->visitService->index($request->only(['search', 'per_page']));
+            $visits = $this->visitService->index($request->only(['search', 'user_id', 'per_page']));
 
             return ApiResponse::success($visits, 'Visits retrieved successfully');
         });
@@ -118,6 +116,67 @@ class VisitController extends Controller
             );
 
             return ApiResponse::success(new VisitResource($visit), 'Visit completed successfully');
+        });
+    }
+
+    public function history(Request $request)
+    {
+        return $this->handleRequest(function () use ($request) {
+            $userId = $request->query('user_id');
+            $visits = $this->visitService->getVisitHistory($userId);
+
+            return ApiResponse::success($visits, 'Visit history retrieved successfully');
+        });
+    }
+
+    public function sync(Request $request)
+    {
+        return $this->handleRequest(function () use ($request) {
+            $request->validate([
+                'visits' => ['required', 'array'],
+                'visits.*.client_id' => ['required', 'string'],
+                'visits.*.outlet_id' => ['required', 'exists:outlets,id'],
+                'visits.*.latitude' => ['required', 'string'],
+                'visits.*.longitude' => ['required', 'string'],
+                'visits.*.sync_status' => ['nullable', 'in:synced,pending,failed'],
+            ]);
+
+            $user = $request->user();
+            $syncedVisits = [];
+
+            foreach ($request->visits as $visitData) {
+                $existingVisit = Visit::where('client_id', $visitData['client_id'])->first();
+
+                if ($existingVisit) {
+                    $existingVisit->update([
+                        'sync_status' => 'synced',
+                        'device_info' => $visitData['device_info'] ?? null,
+                    ]);
+                    $syncedVisits[] = $existingVisit;
+                } else {
+                    $visit = Visit::create([
+                        'company_id' => $user->company_id ?? null,
+                        'outlet_id' => $visitData['outlet_id'],
+                        'user_id' => $user->id,
+                        'client_id' => $visitData['client_id'],
+                        'status' => $visitData['status'] ?? 'pending',
+                        'verification_status' => $visitData['verification_status'] ?? false,
+                        'latitude' => $visitData['latitude'],
+                        'longitude' => $visitData['longitude'],
+                        'outlet_latitude' => $visitData['outlet_latitude'] ?? null,
+                        'outlet_longitude' => $visitData['outlet_longitude'] ?? null,
+                        'distance_meters' => $visitData['distance_meters'] ?? null,
+                        'allowed_radius_meters' => $visitData['allowed_radius_meters'] ?? null,
+                        'sync_status' => 'synced',
+                        'device_info' => $visitData['device_info'] ?? null,
+                        'started_at' => $visitData['started_at'] ?? now(),
+                        'completed_at' => $visitData['completed_at'] ?? null,
+                    ]);
+                    $syncedVisits[] = $visit;
+                }
+            }
+
+            return ApiResponse::success($syncedVisits, 'Offline visits synced successfully');
         });
     }
 }

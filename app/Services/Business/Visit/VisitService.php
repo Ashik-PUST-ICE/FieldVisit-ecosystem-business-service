@@ -13,9 +13,12 @@ use App\Models\Business\VisitProduct;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Business\Beat\BeatService;
 
 class VisitService
 {
+    public function __construct(protected BeatService $beatService) {}
+
     public function index(array $filters): LengthAwarePaginator
     {
         return Visit::query()
@@ -23,6 +26,7 @@ class VisitService
                 $q->where('status', 'like', "%{$search}%")
                     ->orWhere('notes', 'like', "%{$search}%");
             })
+            ->when($filters['user_id'] ?? null, fn($q, $userId) => $q->where('user_id', $userId))
             ->latest()
             ->paginate($filters['per_page'] ?? 15);
     }
@@ -96,6 +100,8 @@ class VisitService
             'outlet_longitude' => $outlet->longitude,
             'allowed_radius_meters' => $outlet->geofence_radius,
             'started_at' => now(),
+            'sync_status' => $data['sync_status'] ?? 'synced',
+            'device_info' => $data['device_info'] ?? null,
         ]);
     }
 
@@ -179,6 +185,14 @@ class VisitService
             }
         }
 
+        $beat = Beat::whereDate('date', now()->toDateString())
+            ->where('assigned_user_id', $visit->user_id)
+            ->first();
+
+        if ($beat) {
+            $this->beatService->markOutletVisited($beat->id, $visit->outlet_id, $visit->id);
+        }
+
         return $visit;
     }
 
@@ -191,6 +205,16 @@ class VisitService
             'path' => $path,
             'caption' => $caption,
         ]);
+    }
+
+    public function getVisitHistory(?int $userId = null): LengthAwarePaginator
+    {
+        $userId = $userId ?? Auth::id();
+
+        return Visit::where('user_id', $userId)
+            ->with('outlet')
+            ->latest()
+            ->paginate(15);
     }
 
     private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
