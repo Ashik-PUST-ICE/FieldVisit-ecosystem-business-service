@@ -27,4 +27,9 @@ class Beat extends Model
     {
         return $this->hasMany(BeatOutlet::class);
     }
+
+    public function visits(): HasMany
+    {
+        return $this->hasMany(Visit::class);
+    }
 }

@@ -9,3 +9,7 @@ Route::get('visits/{visit}', [VisitController::class, 'show']);
 Route::put('visits/{visit}', [VisitController::class, 'update']);
 Route::delete('visits/{visit}', [VisitController::class, 'destroy']);
 Route::post('visits/{visit}/photos', [VisitController::class, 'uploadPhoto']);
+Route::post('outlets/verify-qr', [VisitController::class, 'verifyQr']);
+Route::post('visits/start', [VisitController::class, 'startVisit']);
+Route::post('visits/{visit}/verify-location', [VisitController::class, 'verifyLocation']);
+Route::post('visits/{visit}/complete', [VisitController::class, 'completeVisit']);

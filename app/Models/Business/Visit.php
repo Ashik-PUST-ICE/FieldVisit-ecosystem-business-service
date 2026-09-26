@@ -15,12 +15,26 @@ class Visit extends Model
         return [
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'verification_status' => 'boolean',
+            'distance_meters' => 'integer',
+            'allowed_radius_meters' => 'integer',
+            'display_quantity' => 'integer',
         ];
     }
 
     public function outlet(): BelongsTo
     {
         return $this->belongsTo(Outlet::class);
+    }
+
+    public function beat(): BelongsTo
+    {
+        return $this->belongsTo(Beat::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class);
     }
 
     public function photos(): HasMany

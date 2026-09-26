@@ -4,26 +4,26 @@ namespace App\Models\Business;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class BeatOutlet extends Model
+class OutletAssignment extends Model
 {
     protected $guarded = [];
 
     protected function casts(): array
     {
         return [
-            'sequence' => 'integer',
             'status' => 'boolean',
         ];
-    }
-
-    public function beat(): BelongsTo
-    {
-        return $this->belongsTo(Beat::class);
     }
 
     public function outlet(): BelongsTo
     {
         return $this->belongsTo(Outlet::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class);
     }
 }

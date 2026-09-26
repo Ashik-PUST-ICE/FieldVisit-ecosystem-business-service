@@ -31,4 +31,9 @@ class Outlet extends Model
     {
         return $this->hasMany(BeatOutlet::class);
     }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(OutletAssignment::class);
+    }
 }
