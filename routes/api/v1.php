@@ -17,7 +17,8 @@ use App\Http\Controllers\Api\V1\Business\Unit\UnitController;
 use App\Http\Controllers\Api\V1\Business\VisitController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('outlets')->group(function () {
+Route::middleware('auth.jwt')->group(function () {
+    Route::prefix('outlets')->group(function () {
     Route::get('/', [OutletController::class, 'index']);
     Route::post('/', [OutletController::class, 'store']);
     Route::get('{outlet}', [OutletController::class, 'show']);
@@ -134,9 +135,10 @@ Route::prefix('notifications')->group(function () {
     Route::post('{notification}/mark-as-read', [NotificationController::class, 'markAsRead']);
     Route::post('mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
     Route::get('unread-count', [NotificationController::class, 'unreadCount']);
-});
+    });
 
-Route::prefix('map')->group(function () {
-    Route::get('outlets', [MapController::class, 'outlets']);
-    Route::get('nearby', [MapController::class, 'nearby']);
+    Route::prefix('map')->group(function () {
+        Route::get('outlets', [MapController::class, 'outlets']);
+        Route::get('nearby', [MapController::class, 'nearby']);
+    });
 });

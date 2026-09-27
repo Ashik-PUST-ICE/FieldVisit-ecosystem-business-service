@@ -16,6 +16,11 @@ class ApiResponse
     public static function success(mixed $data = [], string $message = 'Success', int $status = 200): \Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\ResourceCollection
     {
         if ($data instanceof \Illuminate\Http\Resources\Json\ResourceCollection) {
+            $data->additional([
+                'success' => true,
+                'message' => $message,
+            ]);
+
             return $data;
         }
 
@@ -24,7 +29,11 @@ class ApiResponse
             isset($data['data']) &&
             (isset($data['links']) || isset($data['meta']))
         ) {
-            return response()->json($data, $status);
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $data,
+            ], $status);
         }
 
         return response()->json([

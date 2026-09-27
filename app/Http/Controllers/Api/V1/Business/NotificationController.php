@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Business;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Business\Notification\NotificationCollection;
 use App\Http\Resources\Business\Notification\NotificationResource;
 use App\Services\Business\Notification\NotificationService;
 use App\Services\Applications\Api\ApiResponse;
@@ -17,7 +18,7 @@ class NotificationController extends Controller
         return $this->handleRequest(function () use ($request) {
             $notifications = $this->notificationService->index($request->only(['unread_only', 'per_page']));
 
-            return ApiResponse::success(NotificationResource::collection($notifications), 'Notifications retrieved successfully');
+            return ApiResponse::success(new NotificationCollection($notifications), 'Notifications retrieved successfully');
         });
     }
 
