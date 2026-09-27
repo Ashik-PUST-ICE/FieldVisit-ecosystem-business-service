@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'verify.jwt' => \App\Http\Middleware\VerifyJwt::class,
+            'audit.log' => \App\Http\Middleware\AuditLogMiddleware::class,
+            'auth.jwt' => \App\Http\Middleware\AuthenticateWithJwt::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

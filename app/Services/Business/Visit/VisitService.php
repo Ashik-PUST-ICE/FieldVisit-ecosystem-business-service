@@ -2,6 +2,7 @@
 
 namespace App\Services\Business\Visit;
 
+use App\Events\Business\VisitCompleted;
 use App\Http\Resources\Business\Outlet\OutletResource;
 use App\Models\Business\Beat;
 use App\Models\Business\Outlet;
@@ -12,7 +13,6 @@ use App\Models\Business\VisitPhoto;
 use App\Models\Business\VisitProduct;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Auth;
 use App\Services\Business\Beat\BeatService;
 
 class VisitService
@@ -56,10 +56,10 @@ class VisitService
     public function verifyQr(string $qrToken): array
     {
         $outlet = Outlet::where('qr_token', $qrToken)->firstOrFail();
-        $user = Auth::user();
+        $userId = authId();
 
         $assigned = OutletAssignment::where('outlet_id', $outlet->id)
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->where('status', 1)
             ->exists();
 
@@ -68,7 +68,7 @@ class VisitService
         }
 
         $existingPending = Visit::where('outlet_id', $outlet->id)
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->where('status', 'pending')
             ->exists();
 
@@ -84,13 +84,13 @@ class VisitService
 
     public function startVisit(array $data): Visit
     {
-        $user = Auth::user();
+        $userId = authId();
         $outlet = Outlet::findOrFail($data['outlet_id']);
 
         return Visit::create([
             'company_id' => $outlet->company_id,
             'outlet_id' => $outlet->id,
-            'user_id' => $user->id,
+            'user_id' => $userId,
             'client_id' => $data['client_id'] ?? null,
             'status' => 'pending',
             'verification_status' => false,
@@ -193,6 +193,8 @@ class VisitService
             $this->beatService->markOutletVisited($beat->id, $visit->outlet_id, $visit->id);
         }
 
+        event(new VisitCompleted($visit->id, $visit->user_id, $visit->company_id));
+
         return $visit;
     }
 
@@ -209,12 +211,50 @@ class VisitService
 
     public function getVisitHistory(?int $userId = null): LengthAwarePaginator
     {
-        $userId = $userId ?? Auth::id();
+        $userId = $userId ?? authId();
 
         return Visit::where('user_id', $userId)
             ->with('outlet')
             ->latest()
             ->paginate(15);
+    }
+
+    public function addCompetitor(Visit $visit, array $data): VisitCompetitor
+    {
+        return $visit->competitors()->create([
+            'company_id' => $visit->company_id,
+            'competitor_id' => $data['competitor_id'],
+            'notes' => $data['notes'] ?? null,
+        ]);
+    }
+
+    public function removeCompetitor(Visit $visit, VisitCompetitor $visitCompetitor): void
+    {
+        if ($visitCompetitor->visit_id !== $visit->id) {
+            return;
+        }
+
+        $visitCompetitor->delete();
+    }
+
+    public function addProduct(Visit $visit, array $data): VisitProduct
+    {
+        return $visit->products()->create([
+            'company_id' => $visit->company_id,
+            'product_id' => $data['product_id'],
+            'quantity' => $data['quantity'] ?? null,
+            'availability' => $data['availability'] ?? true,
+            'notes' => $data['notes'] ?? null,
+        ]);
+    }
+
+    public function removeProduct(Visit $visit, VisitProduct $visitProduct): void
+    {
+        if ($visitProduct->visit_id !== $visit->id) {
+            return;
+        }
+
+        $visitProduct->delete();
     }
 
     private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float

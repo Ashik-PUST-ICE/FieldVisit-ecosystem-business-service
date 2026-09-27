@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Business\BeatController;
+use App\Http\Controllers\Api\V1\Business\BeatOutlet\BeatOutletController;
 use App\Http\Controllers\Api\V1\Business\CompetitorController;
 use App\Http\Controllers\Api\V1\Business\DashboardController;
+use App\Http\Controllers\Api\V1\Business\MapController;
+use App\Http\Controllers\Api\V1\Business\NotificationController;
 use App\Http\Controllers\Api\V1\Business\OrderController;
 use App\Http\Controllers\Api\V1\Business\OrderItem\OrderItemController;
 use App\Http\Controllers\Api\V1\Business\OutletAssignment\OutletAssignmentController;
@@ -20,6 +23,9 @@ Route::prefix('outlets')->group(function () {
     Route::get('{outlet}', [OutletController::class, 'show']);
     Route::put('{outlet}', [OutletController::class, 'update']);
     Route::delete('{outlet}', [OutletController::class, 'destroy']);
+    Route::post('{outlet}/regenerate-qr', [OutletController::class, 'regenerateQr']);
+    Route::get('{outlet}/download-qr', [OutletController::class, 'downloadQr']);
+    Route::post('{outlet}/deactivate-qr', [OutletController::class, 'deactivateQr']);
     Route::post('verify-qr', [VisitController::class, 'verifyQr']);
 });
 
@@ -38,6 +44,13 @@ Route::prefix('visits')->group(function () {
     Route::put('{visit}', [VisitController::class, 'update']);
     Route::delete('{visit}', [VisitController::class, 'destroy']);
     Route::post('{visit}/photos', [VisitController::class, 'uploadPhoto']);
+    Route::get('{visit}/photos', [VisitController::class, 'photos']);
+    Route::get('{visit}/competitors', [VisitController::class, 'competitors']);
+    Route::post('{visit}/competitors', [VisitController::class, 'addCompetitor']);
+    Route::delete('{visit}/competitors/{visitCompetitor}', [VisitController::class, 'removeCompetitor']);
+    Route::get('{visit}/products', [VisitController::class, 'products']);
+    Route::post('{visit}/products', [VisitController::class, 'addProduct']);
+    Route::delete('{visit}/products/{visitProduct}', [VisitController::class, 'removeProduct']);
     Route::post('start', [VisitController::class, 'startVisit']);
     Route::post('{visit}/verify-location', [VisitController::class, 'verifyLocation']);
     Route::post('{visit}/complete', [VisitController::class, 'completeVisit']);
@@ -92,6 +105,12 @@ Route::prefix('beats')->group(function () {
     Route::get('{beat}', [BeatController::class, 'show']);
     Route::put('{beat}', [BeatController::class, 'update']);
     Route::delete('{beat}', [BeatController::class, 'destroy']);
+
+    Route::prefix('{beat}/outlets')->group(function () {
+        Route::get('/', [BeatOutletController::class, 'index']);
+        Route::post('/', [BeatOutletController::class, 'store']);
+        Route::delete('{beatOutlet}', [BeatOutletController::class, 'destroy']);
+    });
 });
 
 Route::prefix('competitors')->group(function () {
@@ -109,3 +128,15 @@ Route::prefix('reports')->group(function () {
 });
 
 Route::get('dashboard', [DashboardController::class, 'index']);
+
+Route::prefix('notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::post('{notification}/mark-as-read', [NotificationController::class, 'markAsRead']);
+    Route::post('mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
+    Route::get('unread-count', [NotificationController::class, 'unreadCount']);
+});
+
+Route::prefix('map')->group(function () {
+    Route::get('outlets', [MapController::class, 'outlets']);
+    Route::get('nearby', [MapController::class, 'nearby']);
+});

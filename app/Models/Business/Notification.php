@@ -6,7 +6,7 @@ use App\Models\Traits\HasCompany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class BeatOutlet extends Model
+class Notification extends Model
 {
     use HasCompany;
 
@@ -15,18 +15,13 @@ class BeatOutlet extends Model
     protected function casts(): array
     {
         return [
-            'sequence' => 'integer',
-            'status' => 'boolean',
+            'data' => 'array',
+            'read_at' => 'datetime',
         ];
     }
 
-    public function beat(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Beat::class);
-    }
-
-    public function outlet(): BelongsTo
-    {
-        return $this->belongsTo(Outlet::class);
+        return $this->belongsTo(\App\Models\User::class);
     }
 }

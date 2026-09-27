@@ -5,18 +5,18 @@ namespace App\Services\Business\Dashboard;
 use App\Models\Business\Beat;
 use App\Models\Business\Visit;
 use App\Models\Business\Order;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Business\Outlet;
+use App\Models\Business\OutletAssignment;
 
 class DashboardService
 {
     public function index(?int $userId = null): array
     {
-        $userId = $userId ?? Auth::id();
+        $userId = $userId ?? authId();
         $today = now()->toDateString();
 
-        $totalOutlets = DB::table('outlets')->count();
-        $totalAssignedOutlets = DB::table('outlet_assignments')
+        $totalOutlets = Outlet::count();
+        $totalAssignedOutlets = OutletAssignment::query()
             ->when($userId, fn($q) => $q->where('user_id', $userId))
             ->count();
 

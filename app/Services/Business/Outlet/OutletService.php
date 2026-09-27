@@ -36,4 +36,41 @@ class OutletService
     {
         $outlet->delete();
     }
+
+    public function regenerateQr(Outlet $outlet): Outlet
+    {
+        $outlet->update([
+            'qr_token' => str()->random(32),
+            'qr_status' => 'active',
+            'qr_generated_at' => now(),
+            'qr_deactivated_at' => null,
+        ]);
+
+        return $outlet;
+    }
+
+    public function deactivateQr(Outlet $outlet): Outlet
+    {
+        $outlet->update([
+            'qr_status' => 'inactive',
+            'qr_deactivated_at' => now(),
+        ]);
+
+        return $outlet;
+    }
+
+    public function downloadQr(Outlet $outlet): array
+    {
+        if (! $outlet->qr_token) {
+            $outlet->update([
+                'qr_token' => str()->random(32),
+                'qr_generated_at' => now(),
+            ]);
+        }
+
+        return [
+            'token' => $outlet->qr_token,
+            'url' => urlencode(route('outlets.verify-qr', ['qr_token' => $outlet->qr_token])),
+        ];
+    }
 }

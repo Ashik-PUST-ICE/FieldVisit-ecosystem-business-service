@@ -58,4 +58,32 @@ class OutletController extends Controller
             return ApiResponse::success(null, 'Outlet deleted successfully');
         });
     }
+
+    public function regenerateQr(Outlet $outlet)
+    {
+        return $this->handleRequest(function () use ($outlet) {
+            $outlet = $this->outletService->regenerateQr($outlet);
+
+            return ApiResponse::success(new OutletResource($outlet), 'QR regenerated successfully');
+        });
+    }
+
+    public function downloadQr(Outlet $outlet)
+    {
+        return $this->handleRequest(function () use ($outlet) {
+            $qr = $this->outletService->downloadQr($outlet);
+            $qrApi = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data={$qr['url']}";
+
+            return redirect($qrApi);
+        });
+    }
+
+    public function deactivateQr(Outlet $outlet)
+    {
+        return $this->handleRequest(function () use ($outlet) {
+            $outlet = $this->outletService->deactivateQr($outlet);
+
+            return ApiResponse::success(new OutletResource($outlet), 'QR deactivated successfully');
+        });
+    }
 }

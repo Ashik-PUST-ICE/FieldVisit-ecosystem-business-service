@@ -28,6 +28,7 @@ class ApiResponse
         }
 
         return response()->json([
+            'success' => true,
             'message' => $message,
             'data' => $data,
         ], $status);
@@ -41,6 +42,7 @@ class ApiResponse
         $status = self::getStatusCode($e);
 
         $response = [
+            'success' => false,
             'message' => $customMessage ?? $e->getMessage(),
         ];
 

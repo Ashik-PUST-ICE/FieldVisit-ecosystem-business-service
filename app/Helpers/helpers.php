@@ -1,5 +1,14 @@
 <?php
 
+if (! function_exists('authId')) {
+    function authId(): ?int
+    {
+        $claims = request()->attributes->get('jwt_claims');
+
+        return $claims ? (int) ($claims['sub'] ?? null) : null;
+    }
+}
+
 if (! function_exists('format_currency')) {
     function format_currency($value, int $decimals = 2): string
     {

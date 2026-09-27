@@ -19,7 +19,7 @@ class BeatService
 
     public function today(array $filters): LengthAwarePaginator
     {
-        $userId = Auth::id();
+        $userId = authId();
 
         return Beat::query()
             ->whereDate('date', now()->toDateString())

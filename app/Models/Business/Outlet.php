@@ -2,11 +2,14 @@
 
 namespace App\Models\Business;
 
+use App\Models\Traits\HasCompany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Outlet extends Model
 {
+    use HasCompany;
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -14,6 +17,8 @@ class Outlet extends Model
         return [
             'status' => 'boolean',
             'geofence_radius' => 'integer',
+            'qr_generated_at' => 'datetime',
+            'qr_deactivated_at' => 'datetime',
         ];
     }
 

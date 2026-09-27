@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use Carbon\CarbonInterval;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 use App\Models\Passport\Client;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\ServiceProvider;
 use App\Services\Applications\Caches\UserCacheService;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
         });
         Gate::before(function ($user, $ability) {
             return $user->hasRole('super-admin') ? true : null;
+        });
+
+        RateLimiter::for('api', function (\Illuminate\Http\Request $request) {
+            return Limit::perMinute(120)->by($request->ip());
         });
     }
 }
