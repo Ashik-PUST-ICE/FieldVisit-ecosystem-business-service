@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Applications\Api\ApiResponse;
-use Exception;
+use Throwable;
 
 abstract class Controller
 {
@@ -11,7 +11,9 @@ abstract class Controller
     {
         try {
             return $callback();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            // Catch Errors as well as Exceptions so every failure returns a JSON body
+            // instead of a HTML error page (keeps the gateway/client JSON parsing intact).
             return ApiResponse::error($e);
         }
     }

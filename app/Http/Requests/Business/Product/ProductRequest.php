@@ -23,7 +23,7 @@ class ProductRequest extends FormRequest
             'category_id' => ['nullable', 'exists:product_categories,id'],
             'unit_id' => ['nullable', 'integer'],
             'description' => ['nullable', 'string'],
-            'price' => ['nullable', 'integer'],
+            'price' => ['nullable', 'numeric', 'min:0'],
             'status' => ['nullable', 'in:0,1'],
         ];
     }

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Business\BeatController;
 use App\Http\Controllers\Api\V1\Business\BeatOutlet\BeatOutletController;
 use App\Http\Controllers\Api\V1\Business\CompetitorController;
 use App\Http\Controllers\Api\V1\Business\DashboardController;
+use App\Http\Controllers\Api\V1\Business\KpiController;
 use App\Http\Controllers\Api\V1\Business\MapController;
 use App\Http\Controllers\Api\V1\Business\NotificationController;
 use App\Http\Controllers\Api\V1\Business\OrderController;
@@ -40,7 +41,10 @@ Route::prefix('outlet-assignments')->group(function () {
 
 Route::prefix('visits')->group(function () {
     Route::get('/', [VisitController::class, 'index']);
+    Route::get('history', [VisitController::class, 'history']);
     Route::post('/', [VisitController::class, 'store']);
+    Route::post('start', [VisitController::class, 'startVisit']);
+    Route::post('sync', [VisitController::class, 'sync']);
     Route::get('{visit}', [VisitController::class, 'show']);
     Route::put('{visit}', [VisitController::class, 'update']);
     Route::delete('{visit}', [VisitController::class, 'destroy']);
@@ -52,11 +56,8 @@ Route::prefix('visits')->group(function () {
     Route::get('{visit}/products', [VisitController::class, 'products']);
     Route::post('{visit}/products', [VisitController::class, 'addProduct']);
     Route::delete('{visit}/products/{visitProduct}', [VisitController::class, 'removeProduct']);
-    Route::post('start', [VisitController::class, 'startVisit']);
     Route::post('{visit}/verify-location', [VisitController::class, 'verifyLocation']);
     Route::post('{visit}/complete', [VisitController::class, 'completeVisit']);
-    Route::get('history', [VisitController::class, 'history']);
-    Route::post('sync', [VisitController::class, 'sync']);
 });
 
 Route::prefix('orders')->group(function () {
@@ -128,6 +129,15 @@ Route::prefix('reports')->group(function () {
     Route::get('officer-performance', [ReportController::class, 'officerPerformance']);
 });
 
+    Route::prefix('kpis')->group(function () {
+        Route::get('/', [KpiController::class, 'index']);
+        Route::post('/', [KpiController::class, 'store']);
+        Route::get('summary', [KpiController::class, 'summary']);
+        Route::get('{kpiTarget}', [KpiController::class, 'show']);
+        Route::put('{kpiTarget}', [KpiController::class, 'update']);
+        Route::delete('{kpiTarget}', [KpiController::class, 'destroy']);
+    });
+
 Route::get('dashboard', [DashboardController::class, 'index']);
 
 Route::prefix('notifications')->group(function () {
@@ -142,3 +152,4 @@ Route::prefix('notifications')->group(function () {
         Route::get('nearby', [MapController::class, 'nearby']);
     });
 });
+

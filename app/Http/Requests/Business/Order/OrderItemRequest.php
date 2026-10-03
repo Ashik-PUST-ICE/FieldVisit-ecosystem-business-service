@@ -19,8 +19,8 @@ class OrderItemRequest extends FormRequest
         return [
             'product_id' => [$isUpdate ? 'sometimes' : 'required', 'exists:products,id'],
             'quantity' => ['required', 'integer', 'min:1'],
-            'unit_price' => ['required', 'integer', 'min:0'],
-            'total_price' => ['required', 'integer', 'min:0'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
+            'total_price' => ['required', 'numeric', 'min:0'],
         ];
     }
 }

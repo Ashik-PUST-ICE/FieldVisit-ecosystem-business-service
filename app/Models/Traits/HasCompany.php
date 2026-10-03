@@ -2,7 +2,7 @@
 
 namespace App\Models\Traits;
 
-use App\Models\Traits\CompanyScope;
+use Illuminate\Database\Eloquent\Model;
 
 trait HasCompany
 {

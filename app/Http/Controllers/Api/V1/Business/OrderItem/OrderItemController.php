@@ -33,7 +33,7 @@ class OrderItemController extends Controller
         });
     }
 
-    public function show(OrderItemRequest $request, Order $order, OrderItem $orderItem)
+    public function show(Request $request, Order $order, OrderItem $orderItem)
     {
         return $this->handleRequest(function () use ($order, $orderItem) {
             $item = $this->orderItemService->show($order, $orderItem);
