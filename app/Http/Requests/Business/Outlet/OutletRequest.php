@@ -21,6 +21,13 @@ class OutletRequest extends FormRequest
             'code' => ['nullable', 'string', 'max:255'],
             'qr_token' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string'],
+            // Administrative hierarchy, most general first.
+            'division' => ['nullable', 'string', 'max:100'],
+            'district' => ['nullable', 'string', 'max:100'],
+            'upazila' => ['nullable', 'string', 'max:100'],
+            'union' => ['nullable', 'string', 'max:100'],
+            'ward' => ['nullable', 'string', 'max:100'],
+            'village' => ['nullable', 'string', 'max:100'],
             'latitude' => ['nullable', 'string', 'max:255'],
             'longitude' => ['nullable', 'string', 'max:255'],
             'geofence_radius' => ['nullable', 'integer'],

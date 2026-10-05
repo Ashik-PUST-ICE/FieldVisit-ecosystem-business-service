@@ -15,6 +15,13 @@ class OutletResource extends JsonResource
             'code' => $this->code,
             'qr_token' => $this->qr_token,
             'address' => $this->address,
+            // Administrative hierarchy: division -> ... -> village.
+            'division' => $this->division,
+            'district' => $this->district,
+            'upazila' => $this->upazila,
+            'union' => $this->union,
+            'ward' => $this->ward,
+            'village' => $this->village,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'geofence_radius' => $this->geofence_radius,
