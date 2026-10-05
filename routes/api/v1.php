@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Business\BeatOutlet\BeatOutletController;
 use App\Http\Controllers\Api\V1\Business\CompetitorController;
 use App\Http\Controllers\Api\V1\Business\DashboardController;
 use App\Http\Controllers\Api\V1\Business\KpiController;
+use App\Http\Controllers\Api\V1\Business\LocationController;
 use App\Http\Controllers\Api\V1\Business\MapController;
 use App\Http\Controllers\Api\V1\Business\NotificationController;
 use App\Http\Controllers\Api\V1\Business\OrderController;
@@ -19,6 +20,14 @@ use App\Http\Controllers\Api\V1\Business\VisitController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.jwt')->group(function () {
+Route::prefix('locations')->group(function () {
+    Route::get('/', [LocationController::class, 'index']);
+    Route::post('/', [LocationController::class, 'store']);
+    Route::post('bulk', [LocationController::class, 'bulkStore']);
+    Route::get('{location}', [LocationController::class, 'show']);
+    Route::put('{location}', [LocationController::class, 'update']);
+    Route::delete('{location}', [LocationController::class, 'destroy']);
+    });
     Route::prefix('outlets')->group(function () {
     Route::get('/', [OutletController::class, 'index']);
     Route::post('/', [OutletController::class, 'store']);
