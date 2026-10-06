@@ -26,6 +26,8 @@ class OutletRequest extends FormRequest
             'district' => ['nullable', 'string', 'max:100'],
             'upazila' => ['nullable', 'string', 'max:100'],
             'union' => ['nullable', 'string', 'max:100'],
+            // Urban counterpart of union; one or the other is set per outlet.
+            'pourashava' => ['nullable', 'string', 'max:100'],
             'ward' => ['nullable', 'string', 'max:100'],
             'village' => ['nullable', 'string', 'max:100'],
             'latitude' => ['nullable', 'string', 'max:255'],

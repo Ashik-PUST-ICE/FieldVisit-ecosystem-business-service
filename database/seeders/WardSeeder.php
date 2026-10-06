@@ -7,16 +7,18 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Generates the wards of every union.
+ * Generates the wards of every union and pourashava.
  *
- * A Union Parishad area is divided into nine numbered wards by law, so these
- * are structural rows rather than names pulled from a gazetteer - Ward 1 to
- * Ward 9 under each union. They exist so the outlet form offers a picker
- * instead of a free text box; where a union genuinely has a different number,
- * an officer can still type a value, and rows added by hand are left alone.
+ * A Union Parishad area is divided into nine numbered wards by law, and a
+ * pourashava is likewise divided into wards, so these are structural rows
+ * rather than names pulled from a gazetteer - Ward 1 to Ward 9 under each
+ * parent. They exist so the outlet form offers a picker instead of a free
+ * text box; where a place genuinely has a different number, an officer can
+ * still type a value, and rows added by hand are left alone.
  *
  * Village is deliberately not generated. Villages have real names and no
  * national open dataset for them, so inventing some would be worse than none.
+ * (Under a pourashava the same tail level holds mahallas, entered by hand.)
  */
 class WardSeeder extends Seeder
 {
@@ -26,9 +28,10 @@ class WardSeeder extends Seeder
 
     public function run(): void
     {
-        $unionIds = Location::where('type', 'union')->pluck('id');
+        // Wards hang off unions (rural) and pourashavas (urban) alike.
+        $parentIds = Location::whereIn('type', ['union', 'pourashava'])->pluck('id');
 
-        if ($unionIds->isEmpty()) {
+        if ($parentIds->isEmpty()) {
             $this->command?->warn('No unions found. Run UnionSeeder first.');
 
             return;
@@ -49,10 +52,10 @@ class WardSeeder extends Seeder
         $created = 0;
         $buffer = [];
 
-        foreach ($unionIds as $unionId) {
+        foreach ($parentIds as $parentId) {
             for ($n = 1; $n <= self::WARDS_PER_UNION; $n++) {
                 $buffer[] = [
-                    'parent_id' => $unionId,
+                    'parent_id' => $parentId,
                     'name' => 'Ward '.$n,
                     'name_bn' => 'ওয়ার্ড '.$this->toBanglaDigits($n),
                     'type' => 'ward',
@@ -78,7 +81,7 @@ class WardSeeder extends Seeder
         }
 
         $this->command?->info(
-            "Seeded {$created} wards (".self::WARDS_PER_UNION.' per union across '.$unionIds->count().' unions).'
+            "Seeded {$created} wards (".self::WARDS_PER_UNION.' per parent across '.$parentIds->count().' unions/pourashavas).'
         );
     }
 

@@ -60,9 +60,9 @@ class LocationRequest extends FormRequest
                 return;
             }
 
-            $expectedParent = Location::parentTypeFor($type);
+            $expectedParents = Location::parentTypesFor($type);
 
-            if ($expectedParent === null) {
+            if ($expectedParents === []) {
                 if ($this->filled('parent_id')) {
                     $validator->errors()->add('parent_id', "A {$type} is a top level and cannot have a parent.");
                 }
@@ -71,17 +71,18 @@ class LocationRequest extends FormRequest
             }
 
             if (! $this->filled('parent_id')) {
-                $validator->errors()->add('parent_id', "A {$type} must be placed under a {$expectedParent}.");
+                $validator->errors()->add('parent_id', "A {$type} must be placed under a {$expectedParents[0]}.");
 
                 return;
             }
 
             $parent = Location::find($this->input('parent_id'));
 
-            if ($parent && $parent->type !== $expectedParent) {
+            if ($parent && ! in_array($parent->type, $expectedParents, true)) {
+                $allowed = implode(' or ', $expectedParents);
                 $validator->errors()->add(
                     'parent_id',
-                    "A {$type} must be placed under a {$expectedParent}, not a {$parent->type}."
+                    "A {$type} must be placed under a {$allowed}, not a {$parent->type}."
                 );
             }
         });

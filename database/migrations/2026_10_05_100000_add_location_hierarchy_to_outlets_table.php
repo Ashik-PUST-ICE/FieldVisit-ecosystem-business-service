@@ -8,7 +8,11 @@ use Illuminate\Support\Facades\Schema;
  * Adds the Bangladesh administrative hierarchy to `outlets`, so a field officer
  * can identify a shop locationally (not just by GPS):
  *
- *   division -> district -> upazila -> union -> ward -> village -> outlet
+ *   Rural: division -> district -> upazila -> union -> ward -> village
+ *   Urban: division -> district -> upazila -> pourashava -> ward -> mahalla
+ *
+ * Union and pourashava are alternatives at the same depth (rural vs town),
+ * so an outlet fills one or the other, never both.
  *
  * Deliberately mirrors the standard Bangla address order; "upazila" (not
  * "thana") and "village" (not "gram") are the correct English terms.
@@ -22,6 +26,8 @@ return new class extends Migration
             $table->string('district')->nullable()->after('division');
             $table->string('upazila')->nullable()->after('district');
             $table->string('union')->nullable()->after('upazila');
+            // Urban counterpart of union (town chain); one or the other is set.
+            $table->string('pourashava')->nullable()->after('union');
             $table->string('ward')->nullable()->after('union');
             $table->string('village')->nullable()->after('ward');
 
@@ -35,7 +41,7 @@ return new class extends Migration
         Schema::table('outlets', function (Blueprint $table) {
             $table->dropIndex('outlets_district_upazila_index');
             $table->dropColumn([
-                'division', 'district', 'upazila', 'union', 'ward', 'village',
+                'division', 'district', 'upazila', 'union', 'pourashava', 'ward', 'village',
             ]);
         });
     }
