@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LocationSeeder::class,
             UnionSeeder::class,
+            PourashavaSeeder::class,
             WardSeeder::class,
         ]);
     }
